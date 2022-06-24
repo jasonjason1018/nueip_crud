@@ -1,6 +1,217 @@
-<button><a href="/">返回主頁</a></button>
 <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />
+<script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+<script src="http://jqueryui.com/resources/demos/external/jquery.bgiframe-2.1.2.js"></script>
+<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+<button id="newdataop">新增</button>
+@foreach($data as $k=>$v)
 <script type="text/javascript">
+  $(function () {
+  $.ms_DatePicker({
+            YearSelector: ".sel_year{{$k}}",
+            MonthSelector: ".sel_month{{$k}}",
+            DaySelector: ".sel_day{{$k}}"
+    });
+});
+  (function($){
+$.extend({
+ms_DatePicker: function (options) {
+   var defaults = {
+         YearSelector: "#sel_year{{$k}}",
+         MonthSelector: "#sel_month{{$k}}",
+         DaySelector: "#sel_day{{$k}}",
+         FirstText: "--",
+         FirstValue: 0
+   };
+   var opts = $.extend({}, defaults, options);
+   var $YearSelector = $(opts.YearSelector);
+   var $MonthSelector = $(opts.MonthSelector);
+   var $DaySelector = $(opts.DaySelector);
+   var FirstText = opts.FirstText;
+   var FirstValue = opts.FirstValue;
+
+
+   var str = "<option value=\"" + FirstValue + "\">"+FirstText+"</option>";
+   $YearSelector.html(str);
+   $MonthSelector.html(str);
+   $DaySelector.html(str);
+
+
+   var yearNow = new Date().getFullYear();
+   var yearSel = $YearSelector.attr("rel");
+   for (var i = yearNow; i >= 1900; i--) {
+    var sed = yearSel==i?"selected":"";
+    var yearStr = "<option value=\"" + i + "\" " + sed+">"+i+"</option>";
+        $YearSelector.append(yearStr);
+   }
+
+
+  var monthSel = $MonthSelector.attr("rel");
+    for (var i = 1; i <= 12; i++) {
+    var sed = monthSel==i?"selected":"";
+        var monthStr = "<option value=\"" + i + "\" "+sed+">"+i+"</option>";
+        $MonthSelector.append(monthStr);
+    }
+
+
+    function BuildDay() {
+        if ($YearSelector.val() == 0 || $MonthSelector.val() == 0) {
+
+            $DaySelector.html(str);
+        } else {
+            $DaySelector.html(str);
+            var year = parseInt($YearSelector.val());
+            var month = parseInt($MonthSelector.val());
+            var dayCount = 0;
+            switch (month) {
+                 case 1:
+                 case 3:
+                 case 5:
+                 case 7:
+                 case 8:
+                 case 10:
+                 case 12:
+                      dayCount = 31;
+                      break;
+                 case 4:
+                 case 6:
+                 case 9:
+                 case 11:
+                      dayCount = 30;
+                      break;
+                 case 2:
+                      dayCount = 28;
+                      if ((year % 4 == 0) && (year % 100 != 0) || (year % 400 == 0)) {
+                          dayCount = 29;
+                      }
+                      break;
+                 default:
+                      break;
+            }
+          
+      var daySel = $DaySelector.attr("rel");
+            for (var i = 1; i <= dayCount; i++) {
+        var sed = daySel==i?"selected":"";
+        var dayStr = "<option value=\"" + i + "\" "+sed+">" + i + "</option>";
+                $DaySelector.append(dayStr);
+             }
+         }
+      }
+      $MonthSelector.change(function () {
+         BuildDay();
+      });
+      $YearSelector.change(function () {
+         BuildDay();
+      });
+    if($DaySelector.attr("rel")!=""){
+     BuildDay();
+    }
+   } // End ms_DatePicker
+});
+})(jQuery);
+</script>
+
+  <script>
+  $(function() {
+    $( "#dialog{{$k}}" ).dialog({
+      autoOpen: false,
+      height:350,
+      width:400
+    });
+    $( "#opener{{$k}}" ).click(function() {
+      $( "#dialog{{$k}}" ).dialog( "open" );
+      return false;
+    });
+  });
+  </script>
+  <div id="dialog{{$k}}" title="編輯資料" style="display:none">
+  <form method="post" action="/update_data" id="updatedata{{$k}}">
+    @csrf
+      帳號<input type="text" name="account" id="account{{$k}}" autocomplete="off" value="{{$v->account}}" onchange="check_account('{{$k}}')"><br>
+      姓名<input type="text" name="name" id="name" autocomplete="off" value="{{$v->name}}"><br>
+      性別<select name="sex" id="sex">
+        @if($v->sex == '1')
+          <option value="1" selected=selected>男</option>
+        @else
+          <option value="1">男</option>
+        @endif
+        @if($v->sex == '0')
+          <option value="0" selected=selected>女</option>
+        @else
+          <option value="0">女</option>
+        @endif
+        </select><br>
+        @php
+          $ymd = explode('-', $v->birthday);
+        @endphp
+    生日<select class="sel_year{{$k}}" id="sel_year{{$k}}" rel="{{$ymd[0]}}" name="b_y"></select> 年
+      <select class="sel_month{{$k}}" id="sel_month{{$k}}" rel="{{$ymd[1]}}" name="b_m"></select> 月
+      <select class="sel_day{{$k}}" id="sel_day{{$k}}" rel="{{$ymd[2]}}" name="b_d"></select> 日<br>
+    信箱<input type="text" name="mail" id="mail{{$k}}" autocomplete="off" value="{{$v->mail}}" onchange="check_mail('{{$k}}')"><br>
+    備註<textarea name="remark"></textarea><br>
+    <input type="hidden" name="sno" value="{{$v->sno}}">
+  </form>
+  <button onclick="update_data('{{$k}}')">送出</button>
+</div>
+@endforeach
+
+
+<script type="text/javascript">
+  function check_account(no){
+    var regNumber = /\d+/;
+    var regString = /[a-zA-Z]+/;
+    var check2 = /[^@$!%*?&\s]$/;
+    account = $("#account"+no).val();
+    if(!regNumber.test(account) && regString.test(account)){
+      if(account!=""){
+        alert('請輸入英文+數字的帳號');
+        $("#account"+no).val("");
+      }else{
+        alert('請填寫帳號');
+      }
+    }else{
+      if(!check2.test(account)){
+        if(account!=""){
+          alert('帳號不能包含特殊符號');
+          $("#account"+no).val("");
+        }else{
+          alert('請填寫帳號');
+        }
+      }
+    }
+  }
+  function check_mail(no){
+    mail = $("#mail"+no).val();
+    var checkmail = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+    if(!checkmail.test(mail)){
+      if(mail!=""){
+        alert('email格式錯誤');
+        $('#mail'+no).val("");
+      }else{
+        alert('請填寫email');
+      }
+    }
+  };
+  function update_data(no){
+    var yes = confirm('確定要更新資料嗎');
+    if(yes){
+      sex = $("#sex"+no).val();
+      mail = $("#mail"+no).val();
+      account = $("#account"+no).val();
+      name = $("#name"+no).val();
+      if(sex == ""){
+        alert('請選擇性別');
+      }else if(mail == ''){
+        alert('請填寫email');
+      }else if(account == ''){
+        alert('請填寫帳號');
+      }else if(name == ''){
+        alert('請填寫姓名');
+      }else{
+        $("#updatedata"+no).submit();
+      }
+    }
+  }
 	$(function () {
 	$.ms_DatePicker({
             YearSelector: ".sel_year",
@@ -25,13 +236,13 @@ ms_DatePicker: function (options) {
    var FirstText = opts.FirstText;
    var FirstValue = opts.FirstValue;
 
-   // 初始化
+
    var str = "<option value=\"" + FirstValue + "\">"+FirstText+"</option>";
    $YearSelector.html(str);
    $MonthSelector.html(str);
    $DaySelector.html(str);
 
-   // 年份列表
+
    var yearNow = new Date().getFullYear();
    var yearSel = $YearSelector.attr("rel");
    for (var i = yearNow; i >= 1900; i--) {
@@ -40,7 +251,7 @@ ms_DatePicker: function (options) {
         $YearSelector.append(yearStr);
    }
 
-    // 月份列表
+
 	var monthSel = $MonthSelector.attr("rel");
     for (var i = 1; i <= 12; i++) {
 		var sed = monthSel==i?"selected":"";
@@ -48,10 +259,10 @@ ms_DatePicker: function (options) {
         $MonthSelector.append(monthStr);
     }
 
-    // 日列表(仅当选择了年月)
+
     function BuildDay() {
         if ($YearSelector.val() == 0 || $MonthSelector.val() == 0) {
-            // 未选择年份或者月份
+
             $DaySelector.html(str);
         } else {
             $DaySelector.html(str);
@@ -192,6 +403,7 @@ h3 {
 		<td>信箱</td>
 		<td>備註</td>
 		<td></td>
+    <td></td>
 	</tr>
 	@foreach($data as $k=>$v)
 		<tr>
@@ -205,64 +417,60 @@ h3 {
 			<td id="birthday">{{$v->birthday}}</td>
 			<td id="mail">{{$v->mail}}</td>
 			<td id="remark">{{$v->remark}}</td>
-			<td><button><a class="btn popup-btn" href="#letmeopen">編輯</a></button></td>
+			<td><button id="opener{{$k}}">編輯</button></td>
+      <td><button onclick="deletedata('{{$v->sno}}')"><a class="btn popup-btn" href="javascript:void(0)">刪除</a></button>
+      </td>
 		</tr>
 	@endforeach
 </table>
-			<div class="popup-wrap" id="letmeopen">
-			  <div class="popup-box transform-out">
-			  	<h2>帳號<input style="width:600px;height:60px;font-size:36px" type="text" id="account" value=""></h2>
-			  	<h2>姓名<input style="width:600px;height:60px;font-size:36px" type="text" id="name" value=""></h2>
-			  	<h2>性別
-			  		<select name="sex" id="sex" style="width:600px;height:60px;font-size:36px">
-			  				<option value="1">男</option><!--selected="selected" -->
-			  				<option value="0">女</option>
-			  		</select>
-			  	</h2>
-			  	
-			  	<h2>生日<select class="sel_year" rel="2000" name="b_y" style="width:150px;height:60px;font-size:20px"> </select> 年
-				<select class="sel_month" rel="2" name="b_m" style="width:150px;height:60px;font-size:20px"> </select> 月
-				<select class="sel_day" rel="14" name="b_d" style="width:150px;height:60px;font-size:20px"> </select> 日</h2>
-
-			    <a class="close-btn popup-close" href="#">x</a>
-			  </div>
-			</div>
 <script>
-$(".popup-btn").click(function() {
-  var href = $(this).attr("href")
-  $(href).fadeIn(250);
-  $(href).children$("popup-box").removeClass("transform-out").addClass("transform-in");
-  e.preventDefault();
-});
-/*function openwindow(){
-  var href = $(this).attr("href")
-  $(href).fadeIn(250);
-  $(href).children$("popup-box").removeClass("transform-out").addClass("transform-in");
-  e.preventDefault();
-}*/
-
-$(".popup-close").click(function() {
-  closeWindow();
-});
-// $(".popup-wrap").click(function(){
-//   closeWindow();
-// })
-function closeWindow(){
-  $(".popup-wrap").fadeOut(200);
-  $(".popup-box").removeClass("transform-in").addClass("transform-out");
-  event.preventDefault();
+$(function() {
+    $( "#newdata" ).dialog({
+      autoOpen: false,
+      height:350,
+      width:400
+    });
+    $( "#newdataop" ).click(function() {
+      $( "#newdata" ).dialog( "open" );
+      return false;
+    });
+  });
+  </script>
+  <div id="newdata" title="新增資料" style="display:none">
+  <form method="post" action="/insert_data" id="newdata-form">
+    @csrf
+      帳號<input type="text" name="account" id="newaccount" autocomplete="off"><br>
+      姓名<input type="text" name="name" id="newname" autocomplete="off"><br>
+      性別<select name="sex" id="newsex">
+          <option value="1">男</option>
+          <option value="0">女</option>
+        </select><br>
+    生日<select class="sel_year" rel="2000" name="b_y"> </select> 年
+      <select class="sel_month" rel="2" name="b_m"> </select> 月
+      <select class="sel_day" rel="14" name="b_d"> </select> 日<br>
+    信箱<input type="text" name="mail" id="newmail" autocomplete="off"><br>
+    備註<textarea name="remark"></textarea><br>
+  </form>
+  <button id="send_data">送出</button>
+</div>
+<script>
+function deletedata(sno){
+  var yes = confirm('確定要刪除資料嗎');
+  if(yes){
+    window.location='/delete_data/'+sno;
+  }
 }
 </script>
 <script>
-	$("#account").change(function(){
+	$("#newaccount").change(function(){
 		var regNumber = /\d+/;
 		var regString = /[a-zA-Z]+/;
 		var check2 = /[^@$!%*?&\s]$/;
-		account = $("#account").val();
+		account = $("#newaccount").val();
 		if(!regNumber.test(account) && regString.test(account)){
 			if(account!=""){
 				alert('請輸入英文+數字的帳號');
-				$("#account").val("");
+				$("#newaccount").val("");
 			}else{
 				alert('請填寫帳號');
 			}
@@ -270,30 +478,30 @@ function closeWindow(){
 			if(!check2.test(account)){
 				if(account!=""){
 					alert('帳號不能包含特殊符號');
-					$("#account").val("");
+					$("#newaccount").val("");
 				}else{
 					alert('請填寫帳號');
 				}
 			}
 		}
 	});
-	$("#mail").change(function(){
-		mail = $("#mail").val();
+	$("#newmail").change(function(){
+		mail = $("#newmail").val();
 		var checkmail = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 		if(!checkmail.test(mail)){
 			if(mail!=""){
 				alert('email格式錯誤');
-				$('#mail').val("");
+				$('#newmail').val("");
 			}else{
 				alert('請填寫email');
 			}
 		}
 	});
 	$("#send_data").click(function(){
-		sex = $("#sex").val();
-		mail = $("#mail").val();
-		account = $("#account").val();
-		name = $("#name").val();
+		sex = $("#newsex").val();
+		mail = $("#newmail").val();
+		account = $("#newaccount").val();
+		name = $("#newname").val();
 		if(sex == ""){
 			alert('請選擇性別');
 		}else if(mail == ''){
@@ -303,7 +511,7 @@ function closeWindow(){
 		}else if(name == ''){
 			alert('請填寫姓名');
 		}else{
-			$("#data-form").submit();	
+			$("#newdata-form").submit();	
 		}
 	});
 </script>

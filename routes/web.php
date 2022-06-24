@@ -13,11 +13,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
-Route::get('/new_account', function () {
-    return view('form');
-});
+Route::get('/', 'CrudController@account_manage');
 Route::post('/insert_data', 'CrudController@insert_data');
-Route::get('/account_manage', 'CrudController@account_manage');
+Route::post('/update_data', 'CrudController@update_data');
+Route::get('/delete_data/{sno}', 'CrudController@delete_data');
