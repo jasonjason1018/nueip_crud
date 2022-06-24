@@ -14,5 +14,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('crud');
+    return view('welcome');
 });
+Route::get('/new_account', function () {
+    return view('form');
+});
+Route::post('/insert_data', 'CrudController@insert_data');
+Route::get('/account_manage', 'CrudController@account_manage');
